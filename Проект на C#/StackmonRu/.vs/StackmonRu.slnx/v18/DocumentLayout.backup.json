@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\ZVX\\Desktop\\StackmonRu\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{74ED8CCA-0936-F2A0-9B11-BDE6A7153B56}|StackmonRu\\StackmonRu.csproj|c:\\users\\zvx\\desktop\\stackmonru\\stackmonru\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{74ED8CCA-0936-F2A0-9B11-BDE6A7153B56}|StackmonRu\\StackmonRu.csproj|solutionrelative:stackmonru\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Class1.cs",
+              "DocumentMoniker": "C:\\Users\\ZVX\\Desktop\\StackmonRu\\StackmonRu\\Class1.cs",
+              "RelativeDocumentMoniker": "StackmonRu\\Class1.cs",
+              "ToolTip": "C:\\Users\\ZVX\\Desktop\\StackmonRu\\StackmonRu\\Class1.cs*",
+              "RelativeToolTip": "StackmonRu\\Class1.cs*",
+              "ViewState": "AgIAAJwAAAAAAAAAAAAUwK4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-25T02:43:26.297Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

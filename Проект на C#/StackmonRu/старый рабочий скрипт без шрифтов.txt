@@ -1,0 +1,135 @@
+using BepInEx;
+using BepInEx.Unity.Mono;
+using HarmonyLib;
+using I2.Loc;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement; // <-- ДОБАВЛЕНО ДЛЯ РАБОТЫ СО СЦЕНАМИ
+
+namespace StackmonRuFix
+{
+    [BepInPlugin("com.zvx.stackmon.ru", "Stackmon RU Translation", "1.0.0")]
+    public class Plugin : BaseUnityPlugin
+    {
+        public static Dictionary<string, string> CustomTranslations = new Dictionary<string, string>();
+        public static Sprite? CustomTrainerSprite;
+
+        private void Awake()
+        {
+            string pluginDir = Path.GetDirectoryName(Info.Location);
+
+            // --- ЗАГРУЗКА ПЕРЕВОДА ---
+            string translationFilePath = Path.Combine(pluginDir, "ZVX_Translation.txt");
+
+            if (File.Exists(translationFilePath))
+            {
+                string[] lines = File.ReadAllLines(translationFilePath);
+                foreach (string line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line) || line.StartsWith("//") || !line.Contains("="))
+                        continue;
+
+                    int separatorIndex = line.IndexOf('=');
+                    string term = line.Substring(0, separatorIndex).Trim();
+                    string translation = line.Substring(separatorIndex + 1).Trim().Replace("\\n", "\n");
+
+                    CustomTranslations[term] = translation;
+                }
+                Logger.LogInfo($"[ZVX] Успешно загружено строк перевода: {CustomTranslations.Count}");
+            }
+            else
+            {
+                Logger.LogWarning($"[ZVX] Файл перевода не найден! Создаю шаблон: {translationFilePath}");
+                File.WriteAllText(translationFilePath, "// Формат: Ключ=Перевод\nCards/Places/PLACE/GYMWATER/TITLE=Водяная Арена\n");
+            }
+
+            // --- ЗАГРУЗКА ИЗОБРАЖЕНИЯ ---
+            string imagePath = Path.Combine(pluginDir, "img", "SPR_Menu_Front_Trainer.png");
+
+            if (File.Exists(imagePath))
+            {
+                byte[] fileData = File.ReadAllBytes(imagePath);
+                Texture2D tex = new Texture2D(2, 2);
+                ImageConversion.LoadImage(tex, fileData);
+
+                CustomTrainerSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+                CustomTrainerSprite.name = "SPR_Menu_Front_Trainer_RU";
+
+                Logger.LogInfo("[ZVX] Изображение SPR_Menu_Front_Trainer успешно загружено в память!");
+            }
+            else
+            {
+                Logger.LogWarning($"[ZVX] Изображение не найдено по пути: {imagePath}");
+            }
+
+            // Запускаем перехватчик (Harmony) ТОЛЬКО для локализации
+            Harmony.CreateAndPatchAll(typeof(Plugin));
+
+            // Подписываемся на событие загрузки любой сцены в игре
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        // -----------------------------------------------------------
+        // ПАТЧ ЛОКАЛИЗАЦИИ
+        // -----------------------------------------------------------
+        [HarmonyPatch(typeof(LocalizationManager), nameof(LocalizationManager.UpdateSources))]
+        [HarmonyPostfix]
+        public static void InjectRussianTranslation()
+        {
+            if (LocalizationManager.Sources.Count == 0) return;
+
+            LanguageSourceData source = LocalizationManager.Sources[0];
+
+            int rusIndex = source.GetLanguageIndex("Russian");
+            if (rusIndex == -1) rusIndex = source.GetLanguageIndex("Русский");
+            if (rusIndex == -1) rusIndex = 1;
+
+            int injectedCount = 0;
+
+            foreach (var kvp in CustomTranslations)
+            {
+                TermData termData = source.GetTermData(kvp.Key);
+                if (termData != null && rusIndex < termData.Languages.Length)
+                {
+                    termData.Languages[rusIndex] = kvp.Value;
+                    injectedCount++;
+                }
+            }
+
+            UnityEngine.Debug.Log($"[ZVX] Внедрено {injectedCount} строк в I2 Localization.");
+        }
+
+        // -----------------------------------------------------------
+        // ПОДМЕНА КАРТИНКИ ПРИ ЗАГРУЗКЕ СЦЕНЫ (Без Harmony)
+        // -----------------------------------------------------------
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (CustomTrainerSprite == null) return;
+
+            // Resources.FindObjectsOfTypeAll находит вообще ВСЕ объекты в памяти
+            // (даже отключенные и даже заготовки-префабы)
+
+            // 1. Ищем в интерфейсе (UI Image)
+            Image[] uiImages = Resources.FindObjectsOfTypeAll<Image>();
+            foreach (Image img in uiImages)
+            {
+                if (img.sprite != null && img.sprite.name == "SPR_Menu_Front_Trainer")
+                {
+                    img.sprite = CustomTrainerSprite;
+                }
+            }
+
+            // 2. Ищем на обычных 2D-объектах (SpriteRenderer)
+            SpriteRenderer[] spriteRenderers = Resources.FindObjectsOfTypeAll<SpriteRenderer>();
+            foreach (SpriteRenderer sr in spriteRenderers)
+            {
+                if (sr.sprite != null && sr.sprite.name == "SPR_Menu_Front_Trainer")
+                {
+                    sr.sprite = CustomTrainerSprite;
+                }
+            }
+        }
+    }
+}
